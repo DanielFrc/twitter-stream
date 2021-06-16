@@ -50,6 +50,9 @@ class TweetStreamHandler:
             #filter the stream wit track array
             streaming_api.filter(track=track_array)
 
+        except KeyboardInterrupt as ke:
+            logging.exception("Process interrupted by the user")
+
         except Exception as e:
             #Handling exception
             logging.exception("Error while connecting to the stream, trying to connect again")

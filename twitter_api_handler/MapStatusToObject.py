@@ -1,4 +1,5 @@
 #from datetime import datetime
+from util import constants as constants
 
 """
     Class to convert status object to a diccitonary to handle better the conversión to JSON
@@ -20,6 +21,7 @@ class MapStatusToObject :
             "id_str": status.id_str,
             "truncated" : status.truncated,
             "text": status.text,
+            "tags": str(constants.TRACKS),
             "source": status.source,
             "source_url": status.source_url,
             "in_reply_to_status_id": status.in_reply_to_status_id,
