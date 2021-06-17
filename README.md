@@ -1,16 +1,17 @@
-# Twitter Stream
+# Twitter Stream with Python
+
 Twitter Stream is a python process that connects to Twitter API to get tweets of a given track. Also, will give an option to connect with Kinesis to put data in streams (Firehose or Kinesis).
 
-The Twitter Stream project use **tweepy** to connect with Twhitter API and boto3 to connect with Aws services.
+The Twitter Stream project use **tweepy** to connect with Twitter API and boto3 to connect with Aws services.
 
 ## Table of contents
 
--Support
--Before you start
--Installation Guide
--Configuration
--Usage
--License
+* Support
+* Before you start
+* Installation Guide
+* Configuration
+* Usage
+* License
 
 ## Support
 
@@ -50,10 +51,10 @@ TWITTER_BEARER_TOKEN = "TWITTER_BEARER_TOKEN"
 
 Also, you need to configure tweepy as you need on util/constants.py :
 
--__MAX_CONNECTION_RETRIES:__ Maximum reconnection attempts before the process end,  10 by default
--__MAX_CONNECTION_SLEEP:__ = Time to wait in seconds before a connection attempt, 30 by default
--__CSV_MAX_RECORDS:__ = Number of tweets before a csv is generated, 500 generates a file every 5 min aprox
--__TRACKS:__ Python list with topics or hashtags to listen in the stream
+* __MAX_CONNECTION_RETRIES:__ Maximum reconnection attempts before the process end,  10 by default
+* __MAX_CONNECTION_SLEEP:__ = Time to wait in seconds before a connection attempt, 30 by default
+* __CSV_MAX_RECORDS:__ = Number of tweets before a csv is generated, 500 generates a file every 5 min aprox
+* __TRACKS:__ Python list with topics or hashtags to listen in the stream
 
 ```
 #Tweepy Connection configuration
