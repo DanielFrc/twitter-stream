@@ -1,11 +1,10 @@
 # Twitter Stream
-***
 Twitter Stream is a python process that connects to Twitter API to get tweets of a given track. Also, will give an option to connect with Kinesis to put data in streams (Firehose or Kinesis).
 
 The Twitter Stream project use **tweepy** to connect with Twhitter API and boto3 to connect with Aws services.
 
 ## Table of contents
-***
+
 -Support
 -Before you start
 -Installation Guide
@@ -14,11 +13,10 @@ The Twitter Stream project use **tweepy** to connect with Twhitter API and boto3
 -License
 
 ## Support
-***
+
 This project is under construction, if you need help feel free to contact me in [Link](hola@danielfranco.me)
 
 ## Before you start
-***
 
 Before you start, you may have an Twitter Developer account and Amazon Web Services account.
 
@@ -107,4 +105,8 @@ For usage, you may execute the main.py script from command line:
 python main.py
 ```
 
-The process continues runnig until a key interruption is detected `Ctrl + c`, in future versions you may configure the time tha proccess will capture data.
+The process continues runnig until a key interruption is detected `Ctrl + c`, in future versions you may configure the time that proccess will capture data.
+
+## License
+
+Tweeter Stream is available under the MIT license, Also, includes external libraries that are available under a variety of licenses.
