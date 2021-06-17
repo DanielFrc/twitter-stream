@@ -6,7 +6,7 @@ The Twitter Stream project use **tweepy** to connect with Twitter API and boto3 
 
 ## Table of contents
 
-* Support
+* [Support](#Support)
 * Before you start
 * Installation Guide
 * Configuration
@@ -15,7 +15,7 @@ The Twitter Stream project use **tweepy** to connect with Twitter API and boto3 
 
 ## Support
 
-This project is under construction, if you need help feel free to contact me in [Link](hola@danielfranco.me)
+This project is under construction, if you need help feel free to contact me by [e-mail](mailto:hola@danielfranco.me)
 
 ## Before you start
 
@@ -27,6 +27,7 @@ Also, for AWS connection, you need to set your credentials with aws cli, pleas r
 
 This proyect has some dependencies like pandas, tweepy, parquet and boto3. To install the dependencies you must use pip3 command like this:
 
+
 ```
 pip3 install pandas --user
 pip3 install tweepy --user
@@ -34,6 +35,7 @@ pip3 install json --user
 pip3 install boto3 --user
 pip3 install parquet --user
 ```
+
 
 ## Configuration
 
