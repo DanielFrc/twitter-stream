@@ -1,0 +1,246 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Stack for Firehose DeliveryStream S3 Destination.
+
+Parameters:
+  pGlueDatabaseNameRaw:
+    Description: Name of the raw database in Glue
+    Type: String
+    Default: tweet-database-raw
+    
+  pS3BucketRaw:
+    Description: Nome of a bucket in S3
+    Type: String
+    Default: tweets-raw
+    
+  pS3BucketAthenaResults:
+    Description: Name of bucket in S3 for athena results
+    Type: String
+    Default: athena-results
+  
+  pFirehoseDeliveryName:
+    Description: Name of bucket in S3 for athena results
+    Type: String
+    Default: tweet-delivery-stream
+
+  pRoleGlue:
+    Description: Nombre del rol para los crawler y job en Glue
+    Type: String
+    Default: RoleGlueServerless
+
+Resources:
+  #Creating Buckets S3
+  BucketRaw:
+    Type: AWS::S3::Bucket
+    DependsOn:
+      - rProcessingLambdaPermission
+    Properties:
+      BucketName: !Join [ -, [ !Ref pS3BucketRaw, !Ref AWS::AccountId ] ]
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:*
+            Function: !GetAtt rFunctionLambda.Arn
+            Filter:
+              S3Key:
+                Rules:
+                - Name: prefix
+                  Value: data/schema/twitter/
+
+  BucketAthena:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Join [ -, [ !Ref pS3BucketAthenaResults, !Ref AWS::AccountId ] ]
+  
+  rFunctionLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ExecuteStartCrawler
+      Code:
+        ZipFile: |
+            import json
+            import boto3
+            import sys, os
+            
+            glue = boto3.client("glue")
+            
+            def lambda_handler(event, context):
+                
+                s3_bucket = event['Records'][0]['s3']['bucket']['name']
+                s3_object = event['Records'][0]['s3']['object']['key']
+                
+                parse_id_source = s3_object.split('/')[3]
+                if parse_id_source == 'twitter':
+                  glue.start_crawler(Name = 'RawTwitterStream')
+                
+                return {
+                    'statusCode': 200,
+                    'body': json.dumps('Crawler en ejecucion')
+                }
+      Handler: index.lambda_handler
+      Role: !GetAtt ProcessingLambdaExecutionRole.Arn
+      Runtime: python3.7
+      MemorySize: 128
+      Timeout: 300
+  
+  #Creating Permissions and roles
+  rProcessingLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref rFunctionLambda
+      Principal: s3.amazonaws.com
+      SourceArn: !Sub 'arn:aws:s3:::${pS3BucketRaw}-${AWS::AccountId}'
+      SourceAccount: !Ref AWS::AccountId
+
+  ProcessingLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Policies:
+        - PolicyName: allowLogging
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+              - logs:*
+              Resource: arn:aws:logs:*:*:*
+        - PolicyName: getAndDeleteObjects
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+              - glue:StartCrawler
+              - s3:GetObject
+              Resource:  
+              - !Sub 'arn:aws:s3:::${pS3BucketRaw}-${AWS::AccountId}/*'
+              - '*'
+
+  rRoleGlue:
+    Type: AWS::IAM::Role
+    DependsOn: BucketRaw
+    Properties:
+      RoleName: !Ref pRoleGlue
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "glue.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        -
+          PolicyName: "root"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action: 
+                - Glue:*
+                - s3:*
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+                Resource: 
+                - "*"
+                - !Sub 'arn:aws:s3:::${BucketRaw}/*'
+
+  rDeliveryRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service: firehose.amazonaws.com
+            Action: 'sts:AssumeRole'
+            Condition:
+              StringEquals:
+                'sts:ExternalId': !Ref 'AWS::AccountId'
+
+  rDeliveryPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: firehose_delivery_policy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - 's3:AbortMultipartUpload'
+              - 's3:GetBucketLocation'
+              - 's3:GetObject'
+              - 's3:ListBucket'
+              - 's3:ListBucketMultipartUploads'
+              - 's3:PutObject'
+            Resource:
+              - !Join 
+                - ''
+                - - 'arn:aws:s3:::'
+                  - !Ref pS3BucketRaw
+              - !Join 
+                - ''
+                - - 'arn:aws:s3:::'
+                  - !Ref pS3BucketRaw
+                  - '*'
+      Roles:
+        - !Ref rDeliveryRole
+  
+  #Creating Glue Objects
+  rGlueDatabaseRaw:
+    Type: "AWS::Glue::Database"
+    DependsOn: BucketRaw
+    Properties:
+      DatabaseInput:
+        Description: "Base de datos de Glue - Tweets raw"
+        Name: !Ref pGlueDatabaseNameRaw
+      CatalogId: !Ref AWS::AccountId
+  
+  rCrawlerRawTwitter:
+    Type: AWS::Glue::Crawler
+    DependsOn: rGlueDatabaseRaw
+    Properties:
+      Name: "RawTwitterStream"
+      Description: Crawler que genera una tabla en formato JSON en el esquema RAW
+      Role: !GetAtt rRoleGlue.Arn
+      DatabaseName: !Ref rGlueDatabaseRaw
+      Targets:
+        S3Targets:
+          - Path: !Ref BucketRaw
+      SchemaChangePolicy:
+        UpdateBehavior: "UPDATE_IN_DATABASE"
+        DeleteBehavior: "LOG"
+
+  #Creating Delivery Stream
+  deliverystream:
+    DependsOn:
+      - rDeliveryPolicy
+    Type: AWS::KinesisFirehose::DeliveryStream
+    Properties:
+      DeliveryStreamName: !Ref pFirehoseDeliveryName
+      ExtendedS3DestinationConfiguration:
+        BucketARN: !Join 
+          - ''
+          - - 'arn:aws:s3:::'
+            - !Ref BucketRaw
+        BufferingHints:
+          IntervalInSeconds: '60'
+          SizeInMBs: '50'
+        CompressionFormat: UNCOMPRESSED
+        Prefix: data/schema/twitter/
+        RoleARN: !GetAtt rDeliveryRole.Arn

@@ -7,11 +7,11 @@ The Twitter Stream project use **tweepy** to connect with Twitter API and boto3 
 ## Table of contents
 
 * [Support](#Support)
-* Before you start
-* Installation Guide
-* Configuration
-* Usage
-* License
+* [Before you start](#Before-you-start)
+* [Installation Guide](#Installation-Guide)
+* [Configuration]([#Configuration])
+* [Usage](#Usage)
+* [License](#License)
 
 ## Support
 

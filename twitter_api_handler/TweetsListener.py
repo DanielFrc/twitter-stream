@@ -48,7 +48,7 @@ class TweetsListener(tweepy.StreamListener):
         logging.info("Begin connection to tweepy stream")
         
         #Obtain the firehose client to connect while the stream is active
-        #self.firehose_client = self.firehose_handler.get_firehose_client()
+        self.firehose_client = self.firehose_handler.get_firehose_client()
 
 
     def on_status(self, status):
@@ -67,13 +67,13 @@ class TweetsListener(tweepy.StreamListener):
             #Convert tweet information to json 
             logging.info("Converting data to json")
 
-            tweet_json = json.dumps(tweet,ensure_ascii=False)
+            tweet_json = json.dumps(tweet,ensure_ascii=False) + "\n"
 
             #logging.info(tweet_json)
             
             #Putting record to firehose
             logging.info("Putting data to firehose")
-            #self.firehose_handler.put_record(self.firehose_client, tweet_json)
+            self.firehose_handler.put_record(self.firehose_client, tweet_json)
 
             #Putting data to dataframe
             self.generate_dataframe(status)
@@ -81,8 +81,7 @@ class TweetsListener(tweepy.StreamListener):
         except Exception as e:
             #Handling exception
             logging.exception("Error while converting data to JSON")
-
-        
+       
     def on_error(self, status_code):
         """
         Function to handle errors from twitter data
